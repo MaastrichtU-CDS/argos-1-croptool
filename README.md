@@ -1,4 +1,4 @@
-# Argos dockerized
+# Argos crop
 
 This code requires that your data is already pulled from XNAT and stored in a folder on your host machine. If you have not done so yet, please run the XNAT extraction code first or contact Leonard Wee for instructions. This folder should contain 2 subfolders; pre-process-TRAIN, and pre-process-VALIDATE.
 
@@ -33,11 +33,11 @@ Download and unzip the argos-crop-main.zip
 Change your working directory to the argos-crop-main folder: cd your_path_here/argos-crop-main  
 Next we build the container: sudo docker build -f Dockerfile -t crops .  
 
-Run on GPU:
-Please read the following instructions fully before copying.
-To run the preprocessing you need to adjust the path in this command to the path where your data is stored:
+Run on GPU:\
+Please read the following instructions fully before copying.\
+To run the preprocessing you need to adjust the path in this command to the path where your data is stored:\
 sudo docker run --gpus all -v /path/to/your/data:/home/leroy/app/data -ti crops python3 -u crop_lung_volume.py
 
-For example if my data is stored in the following path: /home/ubuntu/Leroy_test/test_data , I would type the command as follows:
+For example if my data is stored in the following path: /home/ubuntu/Leroy_test/test_data , I would type the command as follows:\
 sudo docker run --gpus all -v /home/ubuntu/Leroy_test/test_data:/home/leroy/app/data -ti crops python3 -u crop_lung_volume.py
 
