@@ -1,0 +1,23 @@
+{
+	"image_shape": [512, 512, 1],
+	"patch_shape": [512, 512, 3],
+	"log_path": "/home/leroy/app/logs",
+	"number_of_augmentations": 2,
+
+	"min_bound": -300,
+	"max_bound": 200,
+	"num_classes": 2,
+	"batch_size": 4,
+	"num_steps": 100,
+	"train_eval_step": 10,
+	"val_eval_step": 10,
+	"save_model_step": 50,
+
+	"learning_rate": 0.0001,
+	"decay_steps": 500000,
+	"decay_rate": 0.1,
+	"opt_momentum": 0.9,
+	"dropout_rate": 0.0,
+	"l2_loss": 0.0001
+
+}

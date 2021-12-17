@@ -1,0 +1,31 @@
+{
+	"image_shape": [512, 512, 1],
+	"patch_shape": [512, 512, 1],
+	"data_path": "/mnt/localscratch/maastro/Leroy/lung_data2/",
+	"validation_data_path": "",
+	"patch_path": "training_samples_lung",
+	"val_patch_path": "validation_samples_lung",
+	"log_path": "logs",
+	"split": 30,
+	"number_of_patches": 200,
+	"number_of_augmentations": 3,
+	"switch_views": "False",
+	"translate": "False",
+
+	"min_bound": -850,
+	"max_bound": 150,
+	"num_classes": 2,
+	"batch_size": 5,
+	"num_steps": 25000,
+	"train_eval_step": 50,
+	"val_eval_step": 100,
+	"save_model_step": 2500,
+
+	"decay_steps": 2500,
+	"decay_rate": 0.96,
+	"opt_momentum": 0.9,
+	"learning_rate": 0.001,
+	"dropout_rate": 0.05,
+	"l2_loss": 0.001
+
+}
