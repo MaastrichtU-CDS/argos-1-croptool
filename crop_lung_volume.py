@@ -20,13 +20,18 @@ def load_im(patient_path):
     ct_path = os.path.join(patient_path, 'CT')
     gt_path = os.path.join(patient_path, 'GT')
 
-    ct = nrrd.read(os.path.join(ct_path, 'ct_image.nrrd'))[0]
+    if os.path.exists(ct_path):
+        ct = nrrd.read(os.path.join(ct_path, 'ct_image.nrrd'))[0]
+    else:
+        ct = 0
 
-    gt = np.zeros(ct.shape)
-
-    gt_contents = os.listdir(gt_path)
-    for content in gt_contents:
-        gt  += nrrd.read(os.path.join(gt_path, content))[0]
+    if os.path.exists(gt_path):
+        gt = np.zeros(ct.shape)
+        gt_contents = os.listdir(gt_path)
+        for content in gt_contents:
+            gt  += nrrd.read(os.path.join(gt_path, content))[0]
+    else:
+        gt = 0
 
     return ct, gt
 
@@ -93,7 +98,10 @@ def crop(data_src, save_path, params):
         print(patient)
         patient_path = os.path.join(data_src, patient)
         ct, gt_gtv = load_im(patient_path)
-
+        if np.max(ct) == 0:
+            continue
+        if np.max(gt_gtv) == 0:
+            continue
 
         if np.shape(ct) != np.shape(gt_gtv):
             print(patient + 'CT and GT shape mismatch, skipping...')
@@ -153,13 +161,10 @@ def crop(data_src, save_path, params):
 
 
 if __name__ == '__main__':
-
     if tf.test.gpu_device_name():
         print('Default GPU Device: {}'.format(tf.test.gpu_device_name()))
-
     else:
         print("Running on CPU. Please install GPU version of TF")
-
 
     param_path = os.getcwd() + '/assets/lung_gtv_model/params.json'
     params = utils.Params(param_path)
@@ -170,10 +175,6 @@ if __name__ == '__main__':
 
     save_path_train = os.path.join(save_path, 'Train')
     save_path_validation = os.path.join(save_path, 'Validation')
-    # TODO: Docker persistent volume
-    # TODO: Normalize before saving?
-    # TODO: Argparse for feeding paths?
-    # TODO: Crop training and validation
     crop(r'/home/leroy/app/data/pre-process-TRAIN', save_path_train, params)
     crop(r'/home/leroy/app/data/pre-process-VALIDATE', save_path_validation, params)
 
