@@ -3,7 +3,7 @@
 This code requires that your data is already pulled from XNAT and stored in a folder on your host machine. If you have not done so yet, please run the XNAT extraction code first or contact Leonard Wee for instructions. This folder should contain 2 subfolders; pre-process-TRAIN, and pre-process-VALIDATE.
 
 Step 0:
-If you previously participated in our ARGOS GPU test you can skip steps 1 and 2.
+*** If you previously done our ARGOS GPU standalone test you can skip steps 1 and 2, because it was done during that test. ***
 
 Step 1:  
 If you have not already done so, install an nvidia driver:  
@@ -29,15 +29,26 @@ We can test if the installation was succesful by typing: sudo docker run --rm --
 
 
 Step 3:  
-Download and unzip the argos-crop-main.zip  
-Change your working directory to the argos-crop-main folder: cd your_path_here/argos-crop-main  
-Next we build the container: sudo docker build -f Dockerfile -t crops .  
+Download and unzip the argos-crop-main.zip\
+Change your working directory to the argos-crop-main folder, for example, on my machine it is /home/ubuntu/argos-crop-main :\
+```
+cd {your_path_here}/argos-crop-main 
+```
 
-Run on GPU:\
-Please read the following instructions fully before copying.\
-To run the preprocessing you need to adjust the path in this command to the path where your data is stored:\
-sudo docker run --gpus all -v /path/to/your/data:/home/leroy/app/data -ti crops python3 -u crop_lung_volume.py
+Next we build the container:\
+```
+sudo docker build -f Dockerfile -t crops .  
+```
 
-For example if my data is stored in the following path: /home/ubuntu/Leroy_test/test_data , I would type the command as follows:\
-sudo docker run --gpus all -v /home/ubuntu/Leroy_test/test_data:/home/leroy/app/data -ti crops python3 -u crop_lung_volume.py
+Please read the following instructions fully before executing.\
+To run the preprocessing you need to adjust the path in this command to the directory where the folders called "pre-process-TRAIN" and "pre-process-VALIDATE" are found. You would have done these by running Leonard's batch conversion to NRRD script and then extracted them from XNAT (see Leonard's guidance videos):\
+```
+sudo docker run --gpus all -v {/path/to/your/data}:/home/leroy/app/data -ti crops python3 -u crop_lung_volume.py
+```
+NB : Change the above "{/path/to/your/data}" to your own actual full path. For example, on my machine it is ```/home/ubuntu/xnat-docker-compose-master/pyradiomics-master/o-raw```\
+
+This script will search for lung slices and only select those for deep learning. It will create them in a new folder called "Train" and "Validate". It will put these at the same location where "pre-process-TRAIN" and "pre-process-VALIDATE" were located.
+
+
+
 
