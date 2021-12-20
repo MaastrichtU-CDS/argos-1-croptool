@@ -168,8 +168,8 @@ if __name__ == '__main__':
     if not os.path.exists(save_path):
         os.mkdir(save_path)
 
-    save_path_train = os.path.join(save_path, 'train')
-    save_path_validation = os.path.join(save_path, 'validation')
+    save_path_train = os.path.join(save_path, 'Train')
+    save_path_validation = os.path.join(save_path, 'Validation')
     # TODO: Docker persistent volume
     # TODO: Normalize before saving?
     # TODO: Argparse for feeding paths?
