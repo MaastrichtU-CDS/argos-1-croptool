@@ -6,18 +6,18 @@ Step 0:
 *** If you previously done our ARGOS GPU standalone test you can skip steps 1 and 2, because it was done during that test. ***
 
 Step 1:
-If you have not already done so, install an nvidia driver:
-	Step 1: Identify the type of GPU in your system by using the console and typing: ubuntu-drivers devices
+If you have not already done so, install an nvidia driver:\
+	Step 1: Identify the type of GPU in your system by using the console and typing: ubuntu-drivers devices\
 	Step 2: Your GPU and a list of drivers should appear. Please make a printscreen of this output and send it to us. We recommend 				installing the latest recommended version or a version >= 418.81.07.
-			For example on a Tesla M60 we would type: sudo apt install nvidia-driver-490
+			For example on a Tesla M60 we would type: sudo apt install nvidia-driver-490\
 	Step 3: Reboot your Ubuntu machine.
 
 Step 2:
-The next step is to install Docker-CE by typing the commands below or follow the official instructions here (https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html#docker):
+The next step is to install Docker-CE by typing the commands below or follow the official instructions here (https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html#docker):\
 curl https://get.docker.com | sh \
 && sudo systemctl --now enable docker
 
-Next we install the NVIDIA Container toolkit:
+Next we install the NVIDIA Container toolkit:\
 distribution=$(. /etc/os-release;echo $ID$VERSION_ID) \
    && curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add - \
    && curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
