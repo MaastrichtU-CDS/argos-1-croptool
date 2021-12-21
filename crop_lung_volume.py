@@ -2,6 +2,7 @@
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import numpy as np
+import pandas as pd
 import nrrd
 import nibabel as nib
 import matplotlib.pyplot as plt
@@ -86,13 +87,15 @@ def pred_img_l(ct, loaded, params):
     return predictions
 
 
-def crop(data_src, save_path, params):
+def crop(data_src, save_path, params, fname):
     # Load Model
     loaded_l = tf.keras.models.load_model(os.getcwd() + '/assets/lung_volume_model/saved_models/model_23800', compile=False)
 
     # Load image set
     patients = os.listdir(data_src)
 
+    patient_list = []
+    patient_shape_list = []
     # Predict lung segmentation on image
     for patient in patients:
         print(patient)
@@ -121,43 +124,53 @@ def crop(data_src, save_path, params):
             preds2 = preds2.astype(np.uint8)
 
             pred2_sort = np.argwhere(preds2 == 1)
-            pred2_sorted = pred2_sort[:, 2]
-            min_layer_pred2 = np.min(pred2_sorted)
-            max_layer_pred2 = np.max(pred2_sorted)
+            if pred2_sort.size == 0:
+                print(f'Patient: {patient} failed to predict lung volume, skipping...')
+                continue
+            else:
+                pred2_sorted = pred2_sort[:, 2]
+                min_layer_pred2 = np.min(pred2_sorted)
+                max_layer_pred2 = np.max(pred2_sorted)
 
-            tolerance = 2
+                tolerance = 2
 
-            if min_layer_pred2 - tolerance < 0:
-                min_layer_pred2 = 0
-            if max_layer_pred2 + tolerance > np.shape(ct)[2]:
-                max_layer_pred2 = np.shape(ct)[2]
+                if min_layer_pred2 - tolerance < 0:
+                    min_layer_pred2 = 0
+                if max_layer_pred2 + tolerance > np.shape(ct)[2]:
+                    max_layer_pred2 = np.shape(ct)[2]
 
-            ct_crop = ct[:, :, min_layer_pred2:max_layer_pred2]
-            print(f'Patient: {patient} has {np.shape(ct_crop)} CT shape')
-            gt_gtv_crop = gt_gtv[:, :, min_layer_pred2:max_layer_pred2]
-            ct_crop = utils.normalize(ct_crop, 'False', params.dict['min_bound'], params.dict['max_bound'])
-            patient_save_path = os.path.join(save_path, patient)
-            ct_path = os.path.join(patient_save_path, 'CT')
-            gt_path = os.path.join(patient_save_path, 'GT')
-            gt_gtv_path = os.path.join(gt_path, 'GTV')
+                ct_crop = ct[:, :, min_layer_pred2:max_layer_pred2]
+                print(f'Patient: {patient} has {np.shape(ct_crop)} CT shape')
+                gt_gtv_crop = gt_gtv[:, :, min_layer_pred2:max_layer_pred2]
+                ct_crop = utils.normalize(ct_crop, 'False', params.dict['min_bound'], params.dict['max_bound'])
+                patient_save_path = os.path.join(save_path, patient)
+                ct_path = os.path.join(patient_save_path, 'CT')
+                gt_path = os.path.join(patient_save_path, 'GT')
+                gt_gtv_path = os.path.join(gt_path, 'GTV')
 
-            if not os.path.exists(save_path):
-                os.mkdir(save_path)
-            if not os.path.exists(patient_save_path):
-                os.mkdir(patient_save_path)
-            if not os.path.exists(ct_path):
-                os.mkdir(ct_path)
-            if not os.path.exists(gt_path):
-                os.mkdir(gt_path)
-            if not os.path.exists(gt_gtv_path):
-                os.mkdir(gt_gtv_path)
+                if not os.path.exists(save_path):
+                    os.mkdir(save_path)
+                if not os.path.exists(patient_save_path):
+                    os.mkdir(patient_save_path)
+                if not os.path.exists(ct_path):
+                    os.mkdir(ct_path)
+                if not os.path.exists(gt_path):
+                    os.mkdir(gt_path)
+                if not os.path.exists(gt_gtv_path):
+                    os.mkdir(gt_gtv_path)
 
-            for layer in range(ct_crop.shape[2]):
-                _save_nifti(ct_crop[:, :, layer],
-                            os.path.join(ct_path, str(layer) + '.nii.gz'))
+                for layer in range(ct_crop.shape[2]):
+                    _save_nifti(ct_crop[:, :, layer],
+                                os.path.join(ct_path, str(layer) + '.nii.gz'))
 
-                _save_nifti(gt_gtv_crop[:, :, layer],
-                            os.path.join(gt_gtv_path, str(layer) + '_gtv.nii.gz'))
+                    _save_nifti(gt_gtv_crop[:, :, layer],
+                                os.path.join(gt_gtv_path, str(layer) + '_gtv.nii.gz'))
+
+                patient_list.append(patient)
+                patient_shape_list.append(np.shape(ct_crop))
+    df = pd.DataFrame({'patient': patient_list,
+                       'patient_shape': patient_shape_list})
+    df.to_csv(os.path.join(r'/home/leroy/app/data', fname), index=False)
 
 
 if __name__ == '__main__':
@@ -175,8 +188,9 @@ if __name__ == '__main__':
 
     save_path_train = os.path.join(save_path, 'Train')
     save_path_validation = os.path.join(save_path, 'Validation')
-    crop(r'/home/leroy/app/data/pre-process-TRAIN', save_path_train, params)
-    crop(r'/home/leroy/app/data/pre-process-VALIDATE', save_path_validation, params)
+    crop(r'/home/leroy/app/data/pre-process-TRAIN', save_path_train, params, 'train_list.csv')
+    crop(r'/home/leroy/app/data/pre-process-VALIDATE', save_path_validation, params, 'validation_list.csv')
+    print('Saving "train_list.csv" and "validation_list.csv" logs to data path')
 
 # %%
 
