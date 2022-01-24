@@ -23,6 +23,7 @@ def load_im(patient_path):
 
     if os.path.exists(ct_path):
         ct = nrrd.read(os.path.join(ct_path, 'ct_image.nrrd'))[0]
+
     else:
         ct = 0
 
@@ -107,8 +108,7 @@ def crop(data_src, save_path, params, fname):
         print(patient)
         patient_path = os.path.join(data_src, patient)
         ct, gt_gtv = load_im(patient_path)
-        ct = crop_img(ct, -1024, 3071)
-        
+
         if np.max(ct) == 0:
             continue
         if np.max(gt_gtv) == 0:
@@ -119,6 +119,7 @@ def crop(data_src, save_path, params, fname):
         elif np.max(gt_gtv) == 0:
             print(patient + 'GT is empty, skipping...')
         else:
+            ct = crop_img(ct, -1024, 3071)
             ct_norm = utils.normalize_min_max(ct)
             # ct_norm = utils.normalize(ct, 'True', params.dict['min_bound'], params.dict['max_bound'])
             detached_ct = utils.detach_table(ct_norm)
