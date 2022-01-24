@@ -4,7 +4,7 @@
 	"log_path": "/home/leroy/app/logs",
 	"number_of_augmentations": 2,
 
-	"min_bound": -300,
+	"min_bound": -800,
 	"max_bound": 200,
 	"num_classes": 2,
 	"batch_size": 4,

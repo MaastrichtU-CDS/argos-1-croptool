@@ -61,6 +61,12 @@ def pad_img(img, pad_shape, params):
     return img
 
 
+def crop_img(img, min_crop, max_crop):
+    img[img < min_crop] = min_crop
+    img[img > max_crop] = max_crop
+    return img
+
+
 def pred_img_l(ct, loaded, params):
 
     new_shape = ct.shape[0]
@@ -101,6 +107,8 @@ def crop(data_src, save_path, params, fname):
         print(patient)
         patient_path = os.path.join(data_src, patient)
         ct, gt_gtv = load_im(patient_path)
+        ct = crop_img(ct, -1024, 3071)
+        
         if np.max(ct) == 0:
             continue
         if np.max(gt_gtv) == 0:
