@@ -53,6 +53,12 @@ This script will search for lung slices and only select those for deep learning.
 Epoch training and Prediction
 ---
 To run our run_online_epoch.py and predict_full.py scripts, please first COPY your Train and Validation folders from the Vantage6 mount to a directory where you have permissions (e.g. /home/...). These 2 scripts will save 4 .csv files. Please note that both of these scripts can have a runtime of several hours.
+
+Please run this check first (~5 minutes). This loads all the images and saves a csv file with image shapes. Any strange results in this list might need to be removed first.
+```
+sudo docker run -v {/home/ubuntu/ARGOS_Data}:/home/leroy/app/data -ti crops python3 -u test_loading.py
+```
+
 ```
 sudo docker run --gpus all -v {/home/ubuntu/ARGOS_Data}:/home/leroy/app/data -ti crops python3 -u run_online_epoch.py
 ```
