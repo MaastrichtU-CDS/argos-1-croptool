@@ -49,6 +49,19 @@ NB : Change the above "{/path/to/your/data}" to your own actual full path. For e
 
 This script will search for lung slices and only select those for deep learning. It will create them in a new folder called "Train" and "Validate". It will put these at the same location where "pre-process-TRAIN" and "pre-process-VALIDATE" were located. Additionally, it will write 2 csv files (train_list.csv and validation_list.csv) with patient folder names and image shapes (e.g. patient-001, (512, 512, 89)). Please check if these csv files are okay to send, and send them to Leonard Wee.
 
+---
+Epoch training and Prediction
+---
+To run our run_online_epoch.py and predict_full.py scripts, please first COPY your Train and Validation folders from the Vantage6 mount to a directory where you have permissions (e.g. /home/...). These 2 scripts will save 4 .csv files. Please note that both of these scripts can have a runtime of several hours.
+```
+sudo docker run --gpus all -v {/home/ubuntu/ARGOS_Data}:/home/leroy/app/data -ti crops python3 -u run_online_epoch.py
+```
+NB: Please change "{/home/ubuntu/ARGOS_Data}" to your new path.
+
+```
+sudo docker run --gpus all -v /home/ubuntu/ARGOS_Data:/home/leroy/app/data -ti crops python3 -u predict_full.py
+```
+
 
 
 
