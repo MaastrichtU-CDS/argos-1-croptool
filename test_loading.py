@@ -37,7 +37,7 @@ def get_predictions():
     for patient in patients_train:
         print(patient)
         ct, gt = load_io1(os.path.join('/home/leroy/app/data/Train', patient))
-
+        patient_list.append(patient)
         ct_shape.append(np.shape(ct))
         gt_shape.append(np.shape(gt))
     data = {
@@ -57,7 +57,7 @@ def get_predictions():
     for patient in patients_validation:
         print(patient)
         ct, gt = load_io1(os.path.join('/home/leroy/app/data/Validation', patient))
-
+        patient_list.append(patient)
         ct_shape.append(np.shape(ct))
         gt_shape.append(np.shape(gt))
     data = {

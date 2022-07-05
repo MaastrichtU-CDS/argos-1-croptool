@@ -11,24 +11,28 @@ from scipy import ndimage
 import utils
 
 
-def load_io1(path):
-
+def load_argos(path):
     ct_path = os.path.join(path, 'CT')
     gt_path = os.path.join(path, 'GT/GTV')
 
     ct = np.zeros([512, 512, len(os.listdir(ct_path))])
+    numbering = []
+    contents = os.listdir(ct_path)
+    for i, name in enumerate(contents):
+        numbering.append(i)
 
     gt = np.zeros([512, 512, len(os.listdir(ct_path))])
-    for i, content in enumerate(os.listdir(ct_path)):
-        slice = nib.load(os.path.join(ct_path, content)).get_fdata()
+    for i, content in enumerate(numbering):
+        fname = str(content) + '.nii.gz'
+        slice = nib.load(os.path.join(ct_path, fname)).get_fdata()
         ct[:, :, i] = slice
-    for i, content in enumerate(os.listdir(gt_path)):
-        gt_slice = nib.load(os.path.join(gt_path, content)).get_fdata()
+    for i, content in enumerate(numbering):
+        fname = str(content) + '_gtv.nii.gz'
+        gt_slice = nib.load(os.path.join(gt_path, fname)).get_fdata()
         gt[:, :, i] = gt_slice
 
 
     return ct, gt
-
 
 def calculate_pr_f1(gt, pred):
     testImage = sitk.GetImageFromArray(gt)
@@ -98,12 +102,10 @@ def pred_img(ct, loaded, params):
 
         pred = loaded.predict([ct_layer])
         predictions[:, :, z, :] = pred[0, :, :, :]
-        # print(z)
 
     predictions[predictions < 0.15] = 0
     predictions[predictions != 0] = 1
     predictions = predictions[:, :, :, 1]
-
     return predictions
 
 
@@ -127,15 +129,22 @@ def get_predictions():
     gt_shape = []
 
     for patient in patients_train:
-        print(patient)
-        ct, gt = load_io1(os.path.join('/home/leroy/app/data/Train', patient))
-        # print(f'Patient: {patient} has CT shape: {np.shape(ct)} and GT shape: {np.shape(gt)}')
+        # print(patient)
+        ct, gt = load_argos(os.path.join('/home/leroy/app/data/Train', patient))
+        # print(f'Patient: {patient}')
         # pred_crop = pred_lung[:, :, min_layer_pred2:max_layer_pred2]
 
         predictions = pred_img(ct, loaded, params)
+        save_path = os.path.join('/home/leroy/app/data', patient)
 
+        if not os.path.exists(save_path):
+            os.mkdir(save_path)
+        img = nib.Nifti1Image(predictions , np.eye(4))
+        img.header.get_xyzt_units()
+        nib.save(img, save_path + '/predictions.nii.gz')
         dsc = (2 * np.sum(predictions * gt)) / (np.sum(predictions) + np.sum(gt))
         precision, recall, f1, nWMH, nDetections = calculate_pr_f1(gt, predictions)
+        print(f'Patient: {patient} has DSC: {dsc}, Precision: {precision}, Recall: {recall}')
         patient_list.append(patient)
         precision_list.append(precision)
         recall_list.append(recall)
@@ -172,7 +181,7 @@ def get_predictions():
 
     for patient in patients_validation:
         print(patient)
-        ct, gt = load_io1(os.path.join('/home/leroy/app/data/Validation', patient))
+        ct, gt = load_argos(os.path.join('/home/leroy/app/data/Validation', patient))
         predictions = pred_img(ct, loaded, params)
 
         dsc = (2 * np.sum(predictions * gt)) / (np.sum(predictions) + np.sum(gt))

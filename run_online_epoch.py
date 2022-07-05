@@ -172,17 +172,21 @@ def sort_slices(path, name):
         gt_pos = []
         gt_neg = []
         gt_slices = []
-        for layer in range(0, len(os.listdir(ct_path))):
+        numbering = []
+        contents = os.listdir(ct_path)
+        for i, _ in enumerate(contents):
+            numbering.append(i)
+        # for layer, content in enumerate(numbering):
+        for layer, content in enumerate(numbering):
+            ct_fname = str(content) + '.nii.gz'
+            gt_fname = str(content) + '_gtv.nii.gz'
+            gt_patch_gtv = nib.load(os.path.join(gt_gtv_path, gt_fname)).get_fdata()
 
-            # ct_patch = nib.load(os.path.join(ct_path, str(layer) + '_ct.nii.gz')).get_fdata()
-            gt_patch_gtv = nib.load(os.path.join(gt_gtv_path, str(layer) + '_gtv.nii.gz')).get_fdata()
-            # pet_patch = nib.load(os.path.join(pet_path, str(layer) + '_pet.nii.gz')).get_fdata()
             if np.max(gt_patch_gtv) == 1:
-                gt_slices.append(os.path.join(ct_path, str(layer) + '.nii.gz') + ',' + os.path.join(gt_gtv_path, str(layer) + '_gtv.nii.gz') + ',' + os.path.join(gt_lung_path, str(layer) + '_lung.nii.gz') + ', ' + '1')
-
+                gt_slices.append(os.path.join(ct_path, ct_fname) + ',' + os.path.join(gt_gtv_path, gt_fname) + ',' + os.path.join(gt_lung_path, str(layer) + '_lung.nii.gz') + ', ' + '1')
 
             else:
-                gt_slices.append(os.path.join(ct_path, str(layer) + '.nii.gz') + ',' + os.path.join(gt_gtv_path, str(layer) + '_gtv.nii.gz') + ',' + os.path.join(gt_lung_path, str(layer) + '_lung.nii.gz') + ', ' + '0')
+                gt_slices.append(os.path.join(ct_path, ct_fname) + ',' + os.path.join(gt_gtv_path, gt_fname) + ',' + os.path.join(gt_lung_path, str(layer) + '_lung.nii.gz') + ', ' + '0')
 
         pos_dict[patient] = gt_pos
         neg_dict[patient] = gt_neg
