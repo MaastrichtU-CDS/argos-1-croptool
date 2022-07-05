@@ -137,10 +137,10 @@ def get_predictions():
         predictions = pred_img(ct, loaded, params)
         save_path = os.path.join('/home/leroy/app/data', patient)
 
-        if not os.path.exists(save_path):
-            os.mkdir(save_path)
+        # if not os.path.exists(save_path):
+        #     os.mkdir(save_path)
         # img = nib.Nifti1Image(predictions , np.eye(4))
-        #img.header.get_xyzt_units()
+        # img.header.get_xyzt_units()
         # nib.save(img, save_path + '/predictions.nii.gz')
         dsc = (2 * np.sum(predictions * gt)) / (np.sum(predictions) + np.sum(gt))
         precision, recall, f1, nWMH, nDetections = calculate_pr_f1(gt, predictions)
