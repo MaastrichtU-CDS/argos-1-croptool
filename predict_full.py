@@ -139,9 +139,9 @@ def get_predictions():
 
         if not os.path.exists(save_path):
             os.mkdir(save_path)
-        img = nib.Nifti1Image(predictions , np.eye(4))
-        img.header.get_xyzt_units()
-        nib.save(img, save_path + '/predictions.nii.gz')
+        # img = nib.Nifti1Image(predictions , np.eye(4))
+        #img.header.get_xyzt_units()
+        # nib.save(img, save_path + '/predictions.nii.gz')
         dsc = (2 * np.sum(predictions * gt)) / (np.sum(predictions) + np.sum(gt))
         precision, recall, f1, nWMH, nDetections = calculate_pr_f1(gt, predictions)
         print(f'Patient: {patient} has DSC: {dsc}, Precision: {precision}, Recall: {recall}')
