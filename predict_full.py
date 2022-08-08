@@ -118,6 +118,25 @@ def get_predictions():
     patients_train = os.listdir('/home/leroy/app/data/Train/')
     patients_validation = os.listdir('/home/leroy/app/data/Validation/')
 
+    skipped_train_patients = []
+    for patient_train in patients_train:
+        ct, gt = load_argos(os.path.join('/home/leroy/app/data/Train', patient_train))
+        if np.max(gt) == 0:
+            skipped_train_patients.append(patient_train)
+
+    skipped_val_patients = []
+    for patient_val in patients_validation:
+        ct, gt = load_argos(os.path.join('/home/leroy/app/data/Validation', patient_val))
+        if np.max(gt) == 0:
+            skipped_val_patients.append(patient_val)
+
+    # Remove duplicates
+    patients_train = [patient for patient in patients_train if patient not in skipped_train_patients]
+    patients_validation = [patient for patient in patients_validation if patient not in skipped_val_patients]
+
+    print(f'Removing patients: {skipped_train_patients} from Training set...')
+    print(f'Removing patients: {skipped_val_patients} from Validation set...')
+
     patient_list = []
     precision_list = []
     recall_list = []
@@ -186,6 +205,7 @@ def get_predictions():
 
         dsc = (2 * np.sum(predictions * gt)) / (np.sum(predictions) + np.sum(gt))
         precision, recall, f1, nWMH, nDetections = calculate_pr_f1(gt, predictions)
+        print(f'Patient: {patient} has DSC: {dsc}, Precision: {precision}, Recall: {recall}')
         patient_list.append(patient)
         precision_list.append(precision)
         recall_list.append(recall)

@@ -33,6 +33,7 @@ def get_predictions():
     patient_list = []
     ct_shape = []
     gt_shape = []
+    gt_max = []
 
     for patient in patients_train:
         print(patient)
@@ -40,10 +41,12 @@ def get_predictions():
         patient_list.append(patient)
         ct_shape.append(np.shape(ct))
         gt_shape.append(np.shape(gt))
+        gt_max.append(np.max(gt))
     data = {
         'Patient': patient_list,
         'CT_Shape': ct_shape,
-        'GT_Shape': gt_shape
+        'GT_Shape': gt_shape,
+        'GT_Max': gt_max
     }
     df = pd.DataFrame(data=data)
     df.to_csv(os.path.join(r'/home/leroy/app/data', 'train_shapes.csv'), index=False)
@@ -53,6 +56,7 @@ def get_predictions():
 
     ct_shape = []
     gt_shape = []
+    gt_max = []
 
     for patient in patients_validation:
         print(patient)
@@ -60,11 +64,12 @@ def get_predictions():
         patient_list.append(patient)
         ct_shape.append(np.shape(ct))
         gt_shape.append(np.shape(gt))
+        gt_max.append(np.max(gt))
     data = {
         'Patient': patient_list,
         'CT_Shape': ct_shape,
-        'GT_Shape': gt_shape
-
+        'GT_Shape': gt_shape,
+        'GT_Max': gt_max
     }
     df = pd.DataFrame(data=data)
     df.to_csv(os.path.join(r'/home/leroy/app/data', 'validation_shapes.csv'), index=False)

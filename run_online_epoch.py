@@ -332,6 +332,24 @@ def get_batch_full(ct_slices, params):
     return ct, gt
 
 
+def load_image(path, patient):
+    patient_path = os.path.join(path, patient)
+
+    ct_path = os.path.join(patient_path, 'CT')
+    gt_path = os.path.join(patient_path, 'GT/GTV')
+
+    ct = np.zeros([512, 512, len(os.listdir(ct_path))])
+
+    gt = np.zeros([512, 512, len(os.listdir(ct_path))])
+    for i, content in enumerate(os.listdir(ct_path)):
+        slice = nib.load(os.path.join(ct_path, content)).get_fdata()
+        ct[:, :, i] = slice
+    for i, content in enumerate(os.listdir(gt_path)):
+        gt_slice = nib.load(os.path.join(gt_path, content)).get_fdata()
+        gt[:, :, i] = gt_slice
+    return ct, gt
+
+
 def main():
     @tf.function
     def train_on_batch(im_src, gt_src):
@@ -426,11 +444,11 @@ def main():
     saved_model_path = params.dict['log_path'] + '/gradient_tape/' + current_time + '/saved_models/'
     saved_weights_path = params.dict['log_path'] + '/gradient_tape/' + current_time + '/saved_weights/'
 
-    train_summary_writer = tf.summary.create_file_writer(train_log_dir)
-    val_summary_writer = tf.summary.create_file_writer(val_log_dir)
+    # train_summary_writer = tf.summary.create_file_writer(train_log_dir)
+    # val_summary_writer = tf.summary.create_file_writer(val_log_dir)
 
-    os.mkdir(saved_model_path)
-    os.mkdir(saved_weights_path)
+    os.makedirs(saved_model_path)
+    os.makedirs(saved_weights_path)
 
     # Load training and validation data
     train_slices = utils.read_slices('slices_training_800200.json')
@@ -438,6 +456,26 @@ def main():
 
     patients_train = os.listdir('/home/leroy/app/data/Train/')
     patients_validation = os.listdir('/home/leroy/app/data/Validation/')
+
+    skipped_train_patients = []
+    for patient_train in patients_train:
+        ct, gt = load_image(path='/home/leroy/app/data/Train/', patient=patient_train)
+        if np.max(gt) == 0:
+            skipped_train_patients.append(patient_train)
+
+    skipped_val_patients = []
+    for patient_val in patients_validation:
+        ct, gt = load_image(path='/home/leroy/app/data/Validation/', patient=patient_val)
+        if np.max(gt) == 0:
+            skipped_val_patients.append(patient_val)
+
+    # Remove duplicates
+    patients_train = [patient for patient in patients_train if patient not in skipped_train_patients]
+    patients_validation = [patient for patient in patients_validation if patient not in skipped_val_patients]
+
+    print(f'Removing patients: {skipped_train_patients} from Training set...')
+    print(f'Removing patients: {skipped_val_patients} from Validation set...')
+
     # Start training loop
     epoch_number = []
     patient_id = []
@@ -450,7 +488,7 @@ def main():
     val_loss_scores = []
     for iteration in range(0, 1):
         # print(iteration)
-        _start_graph_tensorflow()
+        # _start_graph_tensorflow()
         for patient in patients_train:
             print(f'Training on: {patient}')
             ct_path = os.path.join('/home/leroy/app/data/Train',
@@ -458,26 +496,32 @@ def main():
             gt_path = os.path.join('/home/leroy/app/data/Train',
                                    patient + '/GT/GTV')
             patient_contents = os.listdir(ct_path)
+            avg_loss = []
+            avg_dice = []
             for slice in range(1, len(patient_contents) - 1):
                 ct_batch, gt_batch = get_sample(ct_path, gt_path, slice, params)
                 train_pred = train_on_batch(ct_batch, gt_batch)
 
                 # Evaluation step during training.
                 # Write training information to training log
-                with train_summary_writer.as_default():
-                    train_dice = train_accuracy(gt_batch, train_pred)
-                    tf.summary.scalar('loss', train_loss.result(), step=iteration)
-                    tf.summary.scalar('accuracy', train_dice, step=iteration)
-                template = 'Patient {}, Slice {}, Loss: {:.5}, Dice: {:.5}'
-                print(template.format(patient,
-                                    slice,
-                                    train_loss.result(),
-                                    train_dice))
-                epoch_number.append(iteration)
-                patient_id.append(patient)
-                train_dice_scores.append(train_dice.numpy())
-                train_loss_scores.append(train_loss.result().numpy())
-        _end_graph_tensorflow(train_summary_writer, train_log_dir)
+                # with train_summary_writer.as_default():
+                train_dice = train_accuracy(gt_batch, train_pred)
+                    # tf.summary.scalar('loss', train_loss.result(), step=iteration)
+                    # tf.summary.scalar('accuracy', train_dice, step=iteration)
+                # template = 'Patient {}, Slice {}, Loss: {:.5}, Dice: {:.5}'
+                avg_loss.append(train_loss.result().numpy())
+                avg_dice.append(train_dice.numpy())
+                # print(template.format(patient,
+                #                     slice,
+                #                     train_loss.result(),
+                #                     train_dice))
+                # epoch_number.append(iteration)
+            epoch_number.append(iteration)
+            patient_id.append(patient)
+            train_dice_scores.append(np.mean(np.array(avg_dice)))
+            train_loss_scores.append(np.mean(np.array(avg_loss)))
+            print(f'{patient} has mean loss {np.mean(np.array(avg_loss))} and mean dice: {np.mean(np.array(avg_dice))}')
+        # _end_graph_tensorflow(train_summary_writer, train_log_dir)
 
         for patient_val in patients_validation:
             print(f'Validating on: {patient_val}')
@@ -486,6 +530,8 @@ def main():
             gt_path = os.path.join('/home/leroy/app/data/Validation',
                                    patient_val + '/GT/GTV')
             patient_contents_val = os.listdir(ct_path)
+            avg_loss = []
+            avg_dice = []
             for slice in range(1, len(patient_contents_val) - 1):
                 ct_batch_val, gt_batch_val = get_sample(ct_path,
                                                         gt_path,
@@ -496,21 +542,28 @@ def main():
 
                 # Evaluation step during validation.
                 # Write validation information to log
-                with val_summary_writer.as_default():
+                # with val_summary_writer.as_default():
                     # validation_dice = validation_accuracy(gt_batch_val, val_pred).numpy()
-                    validation_dice = validation_accuracy(gt_batch_val, val_pred)
-                    tf.summary.scalar('loss', validation_loss.result(), step=iteration)
-                    tf.summary.scalar('accuracy', validation_dice, step=iteration)
-                    loss_list.append(validation_loss.result())
-                template = 'Patient {}, Slice {}, Validation Loss: {:.5}, Validation Dice: {:.5}'
-                print(template.format(patient_val,
-                                      slice,
-                                      validation_loss.result(),
-                                      validation_dice))
-                epoch_number_val.append(iteration)
-                patient_val_id.append(patient_val)
-                val_dice_scores.append(validation_dice.numpy())
-                val_loss_scores.append(validation_loss.result().numpy())
+                validation_dice = validation_accuracy(gt_batch_val, val_pred)
+                avg_loss.append(validation_loss.result().numpy())
+                avg_dice.append(validation_dice.numpy())
+                    # tf.summary.scalar('loss', validation_loss.result(), step=iteration)
+                    # tf.summary.scalar('accuracy', validation_dice, step=iteration)
+                # loss_list.append(validation_loss.result())
+                # template = 'Patient {}, Slice {}, Validation Loss: {:.5}, Validation Dice: {:.5}'
+                # print(template.format(patient_val,
+                #                       slice,
+                #                       validation_loss.result(),
+                #                       validation_dice))
+                # epoch_number_val.append(iteration)
+                # patient_val_id.append(patient_val)
+                # val_dice_scores.append(validation_dice.numpy())
+                # val_loss_scores.append(validation_loss.result().numpy())
+            epoch_number_val.append(iteration)
+            patient_val_id.append(patient_val)
+            val_dice_scores.append(np.mean(np.array(avg_dice)))
+            val_loss_scores.append(np.mean(np.array(avg_loss)))
+            print(f'{patient_val} has mean loss {np.mean(np.array(avg_loss))} and mean dice: {np.mean(np.array(avg_dice))}')
         # Save the model at predefined step numbers.
         # Hardcoded to save model every epoch
         if iteration % 1 == 0:

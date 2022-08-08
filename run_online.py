@@ -66,22 +66,22 @@ def dice_loss(y_true, y_pred):
     return 1 - score
 
 
-def soft_dice_loss(y_true, y_pred, epsilon=1e-6): 
-    """Soft dice loss calculation for arbitrary batch size, number of classes, 
+def soft_dice_loss(y_true, y_pred, epsilon=1e-6):
+    """Soft dice loss calculation for arbitrary batch size, number of classes,
     and number of spatial dimensions.
     Assumes the `channels_last` format.
-  
+
     # Arguments
         y_true: b x X x Y( x Z...) x c One hot encoding of ground truth
-        y_pred: b x X x Y( x Z...) x c Network output, must sum to 1 over c channel (such as after softmax) 
+        y_pred: b x X x Y( x Z...) x c Network output, must sum to 1 over c channel (such as after softmax)
         epsilon: Used for numerical stability to avoid divide by zero errors
     """
-   
+
     # skip the batch and class axis for calculating Dice score
-    axes = tuple(range(1, len(y_pred.shape)-1)) 
+    axes = tuple(range(1, len(y_pred.shape)-1))
     numerator = 2. * np.sum(y_pred * y_true, axes)
     denominator = np.sum(np.square(y_pred) + np.square(y_true), axes)
-    
+
     return 1 - np.mean(numerator / (denominator + epsilon)) # average over classes and batch
 
 
@@ -89,25 +89,25 @@ def soft_dice_loss(y_true, y_pred, epsilon=1e-6):
 def tversky_loss(y_true, y_pred):
     alpha = 0.5
     beta  = 0.5
-    
+
     ones = tf.ones(tf.shape(y_true))
-    
-    
+
+
     #ones = K.ones(K.shape(y_true))
     p0 = y_pred      # proba that voxels are class i
     p1 = ones - y_pred # proba that voxels are not class i
     g0 = y_true
     g1 = ones - y_true
-    
+
     num = tf.math.reduce_sum(p0 * g0, axis=(0, 1, 2, 3))
     den = num + alpha * tf.math.reduce_sum(p0 * g1, axis=(0, 1, 2, 3)) + beta * tf.math.reduce_sum(p1 * g0, axis=(0, 1, 2, 3))
-    
+
     # num = K.sum(p0*g0, (0,1,2,3))
     # den = num + alpha*K.sum(p0*g1,(0,1,2,3)) + beta*K.sum(p1*g0,(0,1,2,3))
     T = tf.math.reduce_sum(num/den)
     Ncl = tf.cast(tf.shape(y_true)[-1], dtype='float32')
     # T = K.sum(num/den) # when summing over classes, T has dynamic range [0 Ncl]
-    
+
     # Ncl = K.cast(K.shape(y_true)[-1], 'float32')
     return Ncl-T
 
@@ -161,34 +161,46 @@ def sort_slices(path, name):
     patients = os.listdir(path)
     for patient in patients:
     # patient = patients[0]
-        
+
         patient_path = os.path.join(path, patient)
         ct_path = os.path.join(patient_path, 'CT')
         gt_path = os.path.join(patient_path, 'GT')
         gt_lung_path = os.path.join(gt_path, 'Lung')
         gt_gtv_path = os.path.join(gt_path, 'GTV')
-        
-        gt_pos = []
-        gt_neg = []
-        gt_slices = []
-        for layer in range(0, len(os.listdir(ct_path))):
-            
-            # ct_patch = nib.load(os.path.join(ct_path, str(layer) + '_ct.nii.gz')).get_fdata()
-            gt_patch_gtv = nib.load(os.path.join(gt_gtv_path, str(layer) + '_gtv.nii.gz')).get_fdata()
-            # pet_patch = nib.load(os.path.join(pet_path, str(layer) + '_pet.nii.gz')).get_fdata()
-            if np.max(gt_patch_gtv) == 1:
-                gt_slices.append(os.path.join(ct_path, str(layer) + '.nii.gz') + ',' + os.path.join(gt_gtv_path, str(layer) + '_gtv.nii.gz') + ',' + os.path.join(gt_lung_path, str(layer) + '_lung.nii.gz') + ', ' + '1')
 
-                    
-            else:
-                gt_slices.append(os.path.join(ct_path, str(layer) + '.nii.gz') + ',' + os.path.join(gt_gtv_path, str(layer) + '_gtv.nii.gz') + ',' + os.path.join(gt_lung_path, str(layer) + '_lung.nii.gz') + ', ' + '0')
 
+        ct = np.zeros([512, 512, len(os.listdir(ct_path))])
+        gt = np.zeros([512, 512, len(os.listdir(ct_path))])
+        for i, content in enumerate(os.listdir(ct_path)):
+            slice = nib.load(os.path.join(ct_path, content)).get_fdata()
+            ct[:, :, i] = slice
+        for i, content in enumerate(os.listdir(gt_gtv_path)):
+            gt_slice = nib.load(os.path.join(gt_gtv_path, content)).get_fdata()
+            gt[:, :, i] = gt_slice
+
+        if np.max(gt) > 0:
+            gt_pos = []
+            gt_neg = []
+            gt_slices = []
+            for layer in range(0, len(os.listdir(ct_path))):
+
+                # ct_patch = nib.load(os.path.join(ct_path, str(layer) + '_ct.nii.gz')).get_fdata()
+                gt_patch_gtv = nib.load(os.path.join(gt_gtv_path, str(layer) + '_gtv.nii.gz')).get_fdata()
+                # pet_patch = nib.load(os.path.join(pet_path, str(layer) + '_pet.nii.gz')).get_fdata()
+                if np.max(gt_patch_gtv) == 1:
+                    gt_slices.append(os.path.join(ct_path, str(layer) + '.nii.gz') + ',' + os.path.join(gt_gtv_path, str(layer) + '_gtv.nii.gz') + ',' + os.path.join(gt_lung_path, str(layer) + '_lung.nii.gz') + ', ' + '1')
+
+
+                else:
+                    gt_slices.append(os.path.join(ct_path, str(layer) + '.nii.gz') + ',' + os.path.join(gt_gtv_path, str(layer) + '_gtv.nii.gz') + ',' + os.path.join(gt_lung_path, str(layer) + '_lung.nii.gz') + ', ' + '0')
+        else:
+            print(f'Patient: {patient} has no GTV in image, max value: {np.max(gt)}, skipping...')
         pos_dict[patient] = gt_pos
         neg_dict[patient] = gt_neg
         slice_dict[patient] = gt_slices
 
         with open(name, 'w') as fp:
-            json.dump(slice_dict, fp)  
+            json.dump(slice_dict, fp)
 
 
 def early_stopping(loss_list, min_delta=0.005, patience=20):
@@ -254,11 +266,11 @@ def get_batch_full(ct_slices, params):
     # ct_path = os.path.join(patient_path, 'CT')
     # gt_path = os.path.join(patient_path, 'GT')
     # pet_path = os.path.join(patient_path, 'PT')
-  
-   
+
+
     ct = np.zeros(shape=[params.dict['batch_size'], 512, 512, params.dict['patch_shape'][2]])
-    gt = np.zeros(shape=[params.dict['batch_size'], 512, 512, 1])                           
-    
+    gt = np.zeros(shape=[params.dict['batch_size'], 512, 512, 1])
+
     for layer in range(0, params.dict['batch_size']):
         while True:
             random_case = random.choice(list(ct_slices))
@@ -267,8 +279,8 @@ def get_batch_full(ct_slices, params):
             else:
                 print(str(random_case) + ' Length: ' + str(len(ct_slices[random_case])))
 
-            
-        
+
+
         rand_num = random.randint(0, 2)
         # print(str(random_case) + ' Length: ' + str(len(ct_slices[random_case])))
         if rand_num == 0:
@@ -277,7 +289,7 @@ def get_batch_full(ct_slices, params):
                 selected_slice = ct_slices[random_case][random_layer]
                 output = selected_slice.split(',')
                 if int(output[-1]) == 1:
-                    
+
                     break
         else:
             random_layer = random.randint(0, len(ct_slices[random_case]) - 1 - (params.dict['patch_shape'][2] // 2))
@@ -285,25 +297,25 @@ def get_batch_full(ct_slices, params):
             output = selected_slice.split(',')
 
         min_layer = random_layer - params.dict['patch_shape'][2] // 2
-        
+
         gt_patch = nib.load(output[1]).get_fdata()
-        
+
         ct_patch = np.zeros([params.dict['patch_shape'][0],
                              params.dict['patch_shape'][1],
                              params.dict['patch_shape'][2]])
-                                    
+
         for z in range(0, params.dict['patch_shape'][-1]):
             selected_slice = ct_slices[random_case][min_layer + z]
             output = selected_slice.split(',')
             ct_patch[:, :, z] = nib.load(output[0]).get_fdata()
-            
-            
+
+
         if random.randint(0, 1) == 1:
             num_augments = np.random.randint(1, params.dict['number_of_augmentations'] + 1)
             ct_patch, gt_patch = data_augmentation.apply_augmentations(ct_patch,
                                                                        gt_patch,
                                                                        num_augments)
-            
+
         ct[layer, :, :, :] = ct_patch
         gt[layer, :, :, 0] = gt_patch
     gt = tf.one_hot(np.uint8(np.squeeze(gt, axis=-1)), params.dict['num_classes'])
@@ -384,7 +396,7 @@ def main():
                                                                   staircase=True)
     optimizer_function = tf.keras.optimizers.Adam(learning_rate=lr_schedule)
     # optimizer_function = tf.keras.optimizers.Adam(params.dict['learning_rate'])
-    
+
     # Define model
     model = models.mod_resnet(params,
                         params.dict['num_classes'],
@@ -402,45 +414,45 @@ def main():
     current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     if not os.path.exists(params.dict['log_path']):
         os.mkdir(params.dict['log_path'])
-    
-    
+
+
     train_log_dir = params.dict['log_path'] + '/gradient_tape/' + current_time + '/train'
     val_log_dir = params.dict['log_path'] + '/gradient_tape/' + current_time + '/val'
     saved_model_path = params.dict['log_path'] + '/gradient_tape/' + current_time + '/saved_models/'
     saved_weights_path = params.dict['log_path'] + '/gradient_tape/' + current_time + '/saved_weights/'
-        
+
     train_summary_writer = tf.summary.create_file_writer(train_log_dir)
     val_summary_writer = tf.summary.create_file_writer(val_log_dir)
 
     os.mkdir(saved_model_path)
     os.mkdir(saved_weights_path)
-    
-    copyfile(os.getcwd() + '/params.json', 
+
+    copyfile(os.getcwd() + '/params.json',
              params.dict['log_path'] + '/gradient_tape/' + current_time + '/params.json')
-    copyfile(os.getcwd() + '/data_augmentation.py', 
+    copyfile(os.getcwd() + '/data_augmentation.py',
              params.dict['log_path'] + '/gradient_tape/' + current_time + '/data_augmentation.py')
-    copyfile(os.getcwd() + '/run_online.py', 
+    copyfile(os.getcwd() + '/run_online.py',
              params.dict['log_path'] + '/gradient_tape/' + current_time + '/run_online.py')
-    copyfile(os.getcwd() + '/utils.py', 
+    copyfile(os.getcwd() + '/utils.py',
              params.dict['log_path'] + '/gradient_tape/' + current_time + '/utils.py')
-    copyfile(os.getcwd() + '/models.py', 
+    copyfile(os.getcwd() + '/models.py',
              params.dict['log_path'] + '/gradient_tape/' + current_time + '/models.py')
 
     # Load training and validation data
     train_slices = utils.read_slices('slices_training_800200.json')
     validation_slices = utils.read_slices('slices_validation_800200.json')
-    
+
     # Start training loop
     for iteration in range(0, params.dict['num_steps'] + 1):
         # print(iteration)
         _start_graph_tensorflow()
         ct_batch, gt_batch = get_batch_full(train_slices, params)
-        
+
         train_pred = train_on_batch(ct_batch, gt_batch)
-        
+
         _end_graph_tensorflow(train_summary_writer, train_log_dir)
 
-        # Evaluation step during training. 
+        # Evaluation step during training.
         if iteration % params.dict['train_eval_step'] == 0:
             # Write training information to training log
             with train_summary_writer.as_default():
@@ -449,14 +461,14 @@ def main():
 
                 tf.summary.scalar('loss', train_loss.result(), step=iteration)
                 tf.summary.scalar('accuracy', train_dice, step=iteration)
-                
+
 
             template = 'Iteration {}, Loss: {:.5}, Dice: {:.5}'
             print(template.format(iteration + 1,
                                   train_loss.result(),
                                   train_dice))
-            
-        
+
+
         # Evaluation step for validation.
         if iteration % params.dict['val_eval_step'] == 0:
             ct_batch_val, gt_batch_val = get_batch_full(validation_slices, params)
@@ -474,7 +486,7 @@ def main():
             print(template.format(iteration + 1,
                                   validation_loss.result(),
                                   validation_dice))
-            
+
             # Earling stopping when loss in the past 'patience' train_eval_steps
             # is smaller than 'min_delta'. Breaks loop.
             # early_stop = early_stopping(loss_list, min_delta=0.01, patience=10)
@@ -486,7 +498,7 @@ def main():
             #     model.save_weights(os.path.join(saved_weights_path,
             #                                     'model_weights' + str(iteration) + '.h5'))
             #     break
-        
+
         # Save the model at predefined step numbers.
         if iteration % params.dict['save_model_step'] == 0:
                 model.save(os.path.join(saved_model_path,
@@ -502,7 +514,7 @@ if __name__ == '__main__':
     # CUDA_VISIBLE_DEVICES = 0
     if tf.test.gpu_device_name():
         print('Default GPU Device: {}'.format(tf.test.gpu_device_name()))
-        
+
     else:
         print("Running on CPU. Please install GPU version of TF")
     current_time = time.time()
