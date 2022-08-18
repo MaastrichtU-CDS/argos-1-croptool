@@ -1,4 +1,6 @@
 # Argos crop
+NB: *** If you ran the cropping tool before and already have your data stored in your vantage mount you could skip step 3 and go straight to the 'Epoch training and Prediction' section below. This involves copying the data from your vantage6 mount back to a local folder. If you are not comfortable or can't find your vantage mount, please run the cropping tool again as instructed in step 3 ***
+
 
 This code requires that your data is already pulled from XNAT and stored in a folder on your host machine. If you have not done so yet, please run the XNAT extraction code first or contact Leonard Wee for instructions. This folder should contain 2 subfolders; pre-process-TRAIN, and pre-process-VALIDATE.
 
