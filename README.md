@@ -54,7 +54,7 @@ This script will search for lung slices and only select those for deep learning.
 ---
 Epoch training and Prediction
 ---
-To run our run_online_epoch.py and predict_full.py scripts, please first COPY your Train and Validation folders from the Vantage6 mount to a directory where you have permissions (e.g. /home/...). These 3 scripts will save 6 .csv files. Please note that 2 of these scripts can have a runtime of several hours.
+To run our run_online_epoch.py and predict_full.py scripts, please first COPY your Train and Validation folders from the Vantage6 mount to a directory where you have permissions (e.g. /home/...) or run the cropping tool from step 3 above again. To gain access to the vantage6 mount you need 'sudo su' privileges. These 3 scripts will save 6 .csv files. Please note that 2 of these scripts can have a runtime of several hours.
 
 Change directory to the folder containing this code and then build the container:
 ```
