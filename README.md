@@ -52,14 +52,14 @@ This script will search for lung slices and only select those for deep learning.
 ---
 Epoch training and Prediction
 ---
-To run our run_online_epoch.py and predict_full.py scripts, please first COPY your Train and Validation folders from the Vantage6 mount to a directory where you have permissions (e.g. /home/...). These 2 scripts will save 4 .csv files. Please note that both of these scripts can have a runtime of several hours.
+To run our run_online_epoch.py and predict_full.py scripts, please first COPY your Train and Validation folders from the Vantage6 mount to a directory where you have permissions (e.g. /home/...). These 3 scripts will save 6 .csv files. Please note that 2 of these scripts can have a runtime of several hours.
 
 Change directory to the folder containing this code and then build the container:
 ```
 sudo docker build -f Dockerfile -t crops .
 ```
 
-Please run this check first (~5 minutes). This loads all the images and saves 2 csv files with image shapes. Any strange results in this list might need to be removed first.
+Please run this check first (~5 minutes). This loads all the images and saves 2 csv files with image shapes. Any strange results in this list might need to be removed first. If you get a 'Permission Denied' error where a .csv file can't be saved, we suggest changing the permission configuration of your data folder '{/home/ubuntu/ARGOS_Data}' e.g. chmod -R ./
 ```
 sudo docker run -v {/home/ubuntu/ARGOS_Data}:/home/leroy/app/data -ti crops python3 -u test_loading.py
 ```
