@@ -61,7 +61,7 @@ Change directory to the folder containing this code and then build the container
 sudo docker build -f Dockerfile -t crops .
 ```
 
-Please run this check first (~5 minutes). This loads all the images and saves 2 csv files with image shapes. Any strange results in this list might need to be removed first. If you get a 'Permission Denied' error where a .csv file can't be saved, we suggest changing the permission configuration of your data folder '{/home/ubuntu/ARGOS_Data}' e.g. chmod -R ./
+Please run this check first (~5 minutes). This loads all the images and saves 2 csv files with image shapes. Any strange results in this list might need to be removed first. If you get a 'Permission Denied' error where a .csv file can't be saved, we suggest changing the permission configuration of your data folder '{/home/ubuntu/ARGOS_Data}' e.g. chmod -R 777 ./
 ```
 sudo docker run -v {/home/ubuntu/ARGOS_Data}:/home/leroy/app/data -ti crops python3 -u test_loading.py
 ```
@@ -74,6 +74,8 @@ NB: Please change "{/home/ubuntu/ARGOS_Data}" to your new path.
 ```
 sudo docker run --gpus all -v /home/ubuntu/ARGOS_Data:/home/leroy/app/data -ti crops python3 -u predict_full.py
 ```
+
+Once you are finished running everything you can change the permissions back with chmod -R 755 ./ 
 
 
 
