@@ -1,5 +1,8 @@
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
+os.environ['TF_FORCE_UNIFIED_MEMORY']='1'
+os.environ['XLA_PYTHON_CLIENT_MEM_FRACTION']='2.0'
 import tensorflow as tf
 import numpy as np
 import json
