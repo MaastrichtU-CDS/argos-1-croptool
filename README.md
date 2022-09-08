@@ -9,10 +9,10 @@ Step 0:
 
 Step 1:
 If you have not already done so, install an nvidia driver:\
-	Step 1: Identify the type of GPU in your system by using the console and typing: ubuntu-drivers devices\
-	Step 2: Your GPU and a list of drivers should appear. Please make a printscreen of this output and send it to us. We recommend 				installing the latest recommended version or a version >= 418.81.07.
+	1: Identify the type of GPU in your system by using the console and typing: ubuntu-drivers devices\
+	2: Your GPU and a list of drivers should appear. Please make a printscreen of this output and send it to us. We recommend 				installing the latest recommended version or a version >= 418.81.07.
 			For example on a Tesla M60 we would type: sudo apt install nvidia-driver-490\
-	Step 3: Reboot your Ubuntu machine.
+	3: Reboot your Ubuntu machine.
 
 Step 2:
 The next step is to install Docker-CE by typing the commands below or follow the official instructions here (https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html#docker):\
